@@ -858,25 +858,41 @@ pageLoaders.adm = async function() {
     </div>`;
 
   // Delegação de eventos no painel ADM
-  el.addEventListener('click', async e => {
+  // Substituir o elemento por um clone para garantir que não haja listeners acumulados
+  // de chamadas anteriores de pageLoaders.adm() (evita requisições duplicadas)
+  const elClone = el.cloneNode(true);
+  el.parentNode.replaceChild(elClone, el);
+
+  elClone.addEventListener('click', async e => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const { action, id } = btn.dataset;
 
-    if (action === 'aprovar') {
-      await apiFetch(`/adm/produtos/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'aprovado' }) });
-    } else if (action === 'negar') {
-      await apiFetch(`/adm/produtos/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'negado' }) });
-    } else if (action === 'excluir-produto') {
-      if (!confirm('Excluir este produto?')) return;
-      await apiFetch(`/adm/produtos/${id}`, { method: 'DELETE' });
-    } else if (action === 'excluir-usuario') {
-      if (!confirm('Desativar este usuário?')) return;
-      await apiFetch(`/adm/usuarios/${id}`, { method: 'DELETE' });
-    }
+    // Desabilitar botão durante a requisição para evitar duplo clique
+    btn.disabled = true;
+    const textoOriginal = btn.textContent;
+    btn.textContent = 'Aguarde...';
 
-    pageLoaders.adm(); // Re-renderizar
-  }, { once: false });
+    try {
+      if (action === 'aprovar') {
+        await apiFetch(`/adm/produtos/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'aprovado' }) });
+      } else if (action === 'negar') {
+        await apiFetch(`/adm/produtos/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'negado' }) });
+      } else if (action === 'excluir-produto') {
+        if (!confirm('Excluir este produto?')) { btn.disabled = false; btn.textContent = textoOriginal; return; }
+        await apiFetch(`/adm/produtos/${id}`, { method: 'DELETE' });
+      } else if (action === 'excluir-usuario') {
+        if (!confirm('Desativar este usuário?')) { btn.disabled = false; btn.textContent = textoOriginal; return; }
+        await apiFetch(`/adm/usuarios/${id}`, { method: 'DELETE' });
+      }
+
+      pageLoaders.adm(); // Re-renderizar
+    } catch (e) {
+      alert('Erro: ' + e.message);
+      btn.disabled = false;
+      btn.textContent = textoOriginal;
+    }
+  });
 };
 
 // ── Esqueci a senha ────────────────────────────────────────────────────────
