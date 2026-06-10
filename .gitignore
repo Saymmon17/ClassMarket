@@ -1,0 +1,16 @@
+/target/
+*.log
+*.class
+*.jar
+*.war
+*.ear
+.idea/
+.vscode/
+*.iml
+.DS_Store
+*.swp
+out/
+logs/
+*.tmp
+# Maven wrapper
+.mvn/

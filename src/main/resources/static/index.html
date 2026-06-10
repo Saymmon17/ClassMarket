@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Class Market</title>
+  <link rel="stylesheet" href="./css/main.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tangerine:wght@400;700&family=Stack+Sans+Headline:wght@200..700&display=swap" rel="stylesheet">
+  <style>
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+    .sucesso {
+      background: rgba(46,125,50,0.12);
+      border: 1px solid #2e7d32;
+      color: #1b5e20;
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-bottom: 16px;
+      font-size: 0.88rem;
+    }
+    .codigo-wrap {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .codigo-wrap input {
+      width: 44px;
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 700;
+      padding: 10px 4px;
+      border-radius: 8px;
+      border: 2px solid #ddb892;
+      background: #fff8f2;
+      color: #3d2612;
+      flex: 1;
+    }
+    .codigo-wrap input:focus {
+      border-color: #9c6644;
+      outline: none;
+    }
+    .reenviar-link {
+      background: none;
+      border: none;
+      color: #9c6644;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+      font-family: inherit;
+    }
+    .reenviar-link:disabled {
+      color: #aaa;
+      text-decoration: none;
+      cursor: default;
+    }
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid #ede0d4;
+      border-top-color: #7f5539;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-whatsapp {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.9rem 1.1rem;
+      border-radius: 10px;
+      border: none;
+      background: #25d366;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.15s ease;
+    }
+    .btn-whatsapp:hover { transform: translateY(-1px); }
+    .btn-whatsapp-disabled {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.9rem 1.1rem;
+      border-radius: 10px;
+      border: none;
+      background: #ccc;
+      color: #555;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar"></nav>
+
+  <main>
+    <section id="page-home" class="page-section" data-page="home">
+      <section class="vitrine">
+        <div class="vitrine-badge">FEITO POR ALUNOS • PARA ALUNOS</div>
+        <h1><span class="navbar-logo">Class Market</span><br><em>na palma da mão</em></h1>
+        <p>Aqui no Class Market você encontra brownies, salgados, doces, trufas e bebidas <br>tudo feito pelos alunos da Fucapi.</p>
+        <div class="vitrine-btns">
+          <a id="btnComprar" href="#catalogo" class="btn-primary">Quero comprar</a>
+          <a href="#cadastro-produto" class="btn-primary">Quero ser um vendedor</a>
+        </div>
+
+        <div class="search-wrap">
+          <input type="text" id="campoBusca" placeholder="🔍  Buscar produto..." autocomplete="off">
+          <div class="search-results" id="searchResults"></div>
+        </div>
+      </section>
+
+      <section class="section-wrap">
+        <h2 class="section-title"> Destaque da semana</h2>
+        <div class="carrossel-outer">
+          <button class="carr-btn" id="prevBtn">&#10094;</button>
+          <div class="carrossel-viewport">
+            <div class="carrossel-track" id="carrosselTrack"></div>
+          </div>
+          <button class="carr-btn" id="nextBtn">&#10095;</button>
+        </div>
+      </section>
+
+      <section class="section-wrap" id="secaoDoces">
+        <h2 class="section-title">Doces 🍫</h2>
+        <div class="grid" id="listaDoces"></div>
+      </section>
+
+      <section class="section-wrap" id="secaoSalgados">
+        <h2 class="section-title">Salgados 🥟</h2>
+        <div class="grid" id="listaSalgados"></div>
+      </section>
+
+      <section class="section-wrap" id="secaoBebidas">
+        <h2 class="section-title">Bebidas 🥤</h2>
+        <div class="grid" id="listaBebidas"></div>
+      </section>
+
+      <footer class="footer">© Desenvolvido pela turma MBI-Fucapi</footer>
+    </section>
+
+    <section id="page-login" class="page-section" data-page="login">
+      <div class="form-page">
+        <div class="form-card">
+          <h1>Entrar</h1>
+          <div class="erro" id="erroLogin" style="display:none"></div>
+
+          <label>E-mail</label>
+          <input type="email" id="email" placeholder="seu@email.com">
+
+          <label>Senha</label>
+          <input type="password" id="senha" placeholder="••••••••">
+
+          <button class="btn-primary full" id="btnLogin">Entrar</button>
+
+          <p class="form-link">Não tem conta? <a href="#cadastro">Cadastre-se</a></p>
+          <p class="form-link"><a href="#esqueci-senha">Esqueci minha senha</a></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-cadastro" class="page-section" data-page="cadastro">
+      <div class="form-page">
+        <div class="form-card">
+          <h1>Crie sua conta</h1>
+          <div class="erro" id="erroForm" style="display:none"></div>
+
+          <label>Nome Completo</label>
+          <input type="text" id="nome" placeholder="Seu nome completo">
+
+          <label>E-mail</label>
+          <input type="email" id="emailCadastro" placeholder="seu@email.com">
+
+          <label>Telefone</label>
+          <input type="tel" id="telefone" placeholder="(00) 00000-0000">
+
+          <label>Curso / Turma</label>
+          <input type="text" id="curso" placeholder="Ex: Informática MBI">
+
+          <label>Senha</label>
+          <input type="password" id="senhaCadastro" placeholder="Crie uma senha">
+
+          <label>Confirmar Senha</label>
+          <input type="password" id="confirmar" placeholder="Repita a senha">
+
+          <button class="btn-primary full" id="btnCadastro">Cadastrar</button>
+          <p class="form-link">Já tem conta? <a href="#login">Entrar</a></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-cadastro-produto" class="page-section" data-page="cadastro-produto">
+      <div class="form-page">
+        <div class="form-card" id="formWrap">
+          <a href="#home" class="back-link">← Início</a>
+          <h1>Cadastrar Produto</h1>
+
+          <label>Nome do produto *</label>
+          <input type="text" id="nomeProduto" placeholder="Ex: Brownie de Chocolate">
+
+          <label>Preço (R$) *</label>
+          <input type="number" id="preco" placeholder="5.00" step="0.01" min="0">
+
+          <label>Estoque *</label>
+          <input type="number" id="estoque" placeholder="10" min="0">
+
+          <label>Categoria *</label>
+          <select id="categoria">
+            <option value="">Selecione...</option>
+            <option value="doces">Doces</option>
+            <option value="salgados">Salgados</option>
+            <option value="bebidas">Bebidas</option>
+          </select>
+
+          <label>Descrição</label>
+          <textarea id="descricao" rows="4" placeholder="Descreva seu produto..."></textarea>
+
+          <label>Bloco *</label>
+          <input type="text" id="bloco" placeholder="Ex: D">
+
+          <label>Sala *</label>
+          <input type="text" id="sala" placeholder="Ex: 23">
+
+          <label>Seu WhatsApp (com DDD) *</label>
+          <input type="tel" id="telefoneVendedor" placeholder="Ex: 92991234567">
+
+          <label>Foto do produto</label>
+          <input type="file" id="foto" accept="image/*">
+          <img id="fotoPreview" style="display:none; margin-top:0.8rem; width:100%; border-radius:10px; max-height:200px; object-fit:cover;" alt="preview">
+
+          <button class="btn-primary full" id="btnCadastrar" style="margin-top:1.5rem">Cadastrar Produto</button>
+        </div>
+      </div>
+      <footer class="footer">© Desenvolvido pela turma MBI-Fucapi</footer>
+    </section>
+
+    <section id="page-catalogo" class="page-section" data-page="catalogo">
+      <div class="page-wrap">
+        <a href="#home" class="back-link">← Voltar</a>
+        <h1 class="page-title">Catálogo de Produtos</h1>
+
+        <div class="catalogo-search-wrap">
+          <input type="text" id="catalogoBusca" placeholder="🔍  Buscar no catálogo...">
+        </div>
+
+        <div class="filter-bar" id="filterBar">
+          <button class="filter-btn active" data-cat="todos">Todos</button>
+          <button class="filter-btn" data-cat="doces">🍫 Doces</button>
+          <button class="filter-btn" data-cat="salgados">🥟 Salgados</button>
+          <button class="filter-btn" data-cat="bebidas">🥤 Bebidas</button>
+        </div>
+
+        <div class="grid" id="catalogoGrid"></div>
+        <p class="empty-msg" id="emptyMsg" style="display:none">Nenhum produto encontrado.</p>
+      </div>
+      <footer class="footer">© Desenvolvido pela turma MBI-Fucapi</footer>
+    </section>
+
+    <section id="page-avaliacao" class="page-section" data-page="avaliacao">
+      <div class="page-wrap">
+        <a href="#home" class="back-link">← Início</a>
+        <h1 class="page-title">Avaliações</h1>
+        <p style="color:var(--muted); margin-bottom:2rem">Deixe sua opinião sobre o site ou um produto.</p>
+
+        <div class="aval-grid">
+          <div class="card">
+            <h2>Avaliar o Site</h2>
+            <label>Nota</label>
+            <div class="estrelas" id="estrelasSite" data-nota="0">
+              <span data-nota="1">★</span><span data-nota="2">★</span>
+              <span data-nota="3">★</span><span data-nota="4">★</span><span data-nota="5">★</span>
+            </div>
+            <label>Seu nome (opcional)</label>
+            <input type="text" id="nomeSite" placeholder="Ex: João">
+            <label>Comentário</label>
+            <textarea id="comentarioSite" rows="4" placeholder="O que você achou do Class Market?"></textarea>
+            <button class="btn-primary full" id="btnAvaliarSite">Enviar</button>
+          </div>
+
+          <div class="card">
+            <h2>Avaliar Produto</h2>
+            <label>Nota</label>
+            <div class="estrelas" id="estrelasProduto" data-nota="0">
+              <span data-nota="1">★</span><span data-nota="2">★</span>
+              <span data-nota="3">★</span><span data-nota="4">★</span><span data-nota="5">★</span>
+            </div>
+            <label>Produto</label>
+            <select id="produtoSelecionado"><option value="">Selecione...</option></select>
+            <label>Comentário</label>
+            <textarea id="comentarioProduto" rows="4" placeholder="Gostou? Tem sugestões?"></textarea>
+            <button class="btn-primary full" id="btnAvaliarProduto">Enviar</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:2rem">
+          <h2>Avaliações Recentes</h2>
+          <div id="listaAvaliacoes"></div>
+        </div>
+      </div>
+      <footer class="footer">© Desenvolvido pela turma MBI-Fucapi</footer>
+    </section>
+
+    <section id="page-produto" class="page-section" data-page="produto">
+      <div class="page-wrap">
+        <a href="#catalogo" class="back-link">← Ver outros produtos</a>
+        <div class="produto-layout" id="produtoLayout">
+          <p style="color:#5e4024">Carregando...</p>
+        </div>
+
+        <div class="produto-avaliacoes card" id="secAvaliacoes" style="margin-top:40px;display:none">
+          <h2>⭐ Avaliações deste produto</h2>
+          <div id="avaliacoesProduto"></div>
+        </div>
+      </div>
+      <footer class="footer">© Desenvolvido pela turma MBI-Fucapi</footer>
+    </section>
+
+    <section id="page-adm" class="page-section" data-page="adm">
+      <div class="page-wrap">
+        <a href="#home" class="back-link">← Home</a>
+        <h1 class="page-title">Painel Administrativo</h1>
+        <div id="admContent"></div>
+      </div>
+      <footer class="footer">© Desenvolvido pela turma MBI-Fucapi</footer>
+    </section>
+
+    <section id="page-esqueci-senha" class="page-section" data-page="esqueci-senha">
+      <div class="form-page">
+        <div class="form-card">
+          <div id="step1">
+            <h1>Esqueci minha senha</h1>
+            <p style="color:#5e4024;margin-bottom:24px;font-size:0.9rem;line-height:1.6">
+              Informe o e-mail cadastrado. Enviaremos um código de 6 dígitos para você.
+            </p>
+            <div class="erro" id="erroStep1" style="display:none"></div>
+
+            <label>E-mail</label>
+            <input type="email" id="emailInput" placeholder="seu@email.com">
+
+            <button class="btn-primary full" id="btnEnviar">Enviar código</button>
+            <p class="form-link" style="margin-top:20px">
+              Lembrou? <a href="#login">Voltar ao login</a>
+            </p>
+          </div>
+
+          <div id="step2" style="display:none">
+            <h1>Digite o código</h1>
+            <p style="color:#5e4024;margin-bottom:8px;font-size:0.9rem;line-height:1.6">
+              Enviamos um código de 6 dígitos para <strong id="emailMostrado"></strong>.
+            </p>
+            <p style="color:#9c6644;font-size:0.82rem;margin-bottom:24px">
+              Verifique também a pasta de spam.
+            </p>
+
+            <div class="erro" id="erroStep2" style="display:none"></div>
+            <div class="sucesso" id="sucessoStep2" style="display:none"></div>
+
+            <label>Código de verificação</label>
+            <div class="codigo-wrap" id="codigoWrap">
+              <input type="text" maxlength="1" class="dig" inputmode="numeric">
+              <input type="text" maxlength="1" class="dig" inputmode="numeric">
+              <input type="text" maxlength="1" class="dig" inputmode="numeric">
+              <input type="text" maxlength="1" class="dig" inputmode="numeric">
+              <input type="text" maxlength="1" class="dig" inputmode="numeric">
+              <input type="text" maxlength="1" class="dig" inputmode="numeric">
+            </div>
+
+            <button class="btn-primary full" id="btnVerificar">Verificar código</button>
+
+            <p style="margin-top:16px;font-size:0.85rem;color:#5e4024;text-align:center">
+              Não recebeu?
+              <button class="reenviar-link" id="btnReenviar">Reenviar código</button>
+              <span id="timerReenvio" style="display:none;color:#9c6644"></span>
+            </p>
+            <p class="form-link" style="margin-top:8px">
+              <a href="#esqueci-senha">← Usar outro e-mail</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-redefinir-senha" class="page-section" data-page="redefinir-senha">
+      <div class="form-page">
+        <div class="form-card">
+          <div id="formReset">
+            <h1>Nova senha</h1>
+            <p style="color:#5e4024;margin-bottom:24px;font-size:0.9rem">
+              Crie uma nova senha para a sua conta.
+            </p>
+
+            <div class="erro" id="erroMsg" style="display:none"></div>
+            <div class="sucesso" id="sucessoMsg" style="display:none"></div>
+
+            <label>Nova senha</label>
+            <input type="password" id="novaSenha" placeholder="Mínimo 4 caracteres">
+            <p class="req-senha">Use ao menos 4 caracteres.</p>
+
+            <label>Confirmar nova senha</label>
+            <input type="password" id="confirmarSenha" placeholder="Repita a nova senha">
+
+            <button class="btn-primary full" id="btnSalvar">Salvar nova senha</button>
+          </div>
+
+          <div id="acessoInvalido" style="display:none;text-align:center;color:#8b3d22">
+            <p style="font-size:2rem;margin-bottom:8px">🔒</p>
+            <p style="margin-bottom:16px">Acesso inválido. Solicite a redefinição novamente.</p>
+            <a href="#esqueci-senha" class="btn-primary">Ir para recuperação</a>
+          </div>
+
+          <div id="finalOk" style="display:none;text-align:center">
+            <p style="font-size:2.5rem;margin-bottom:8px">✅</p>
+            <h2 style="color:#2e7d32;margin-bottom:8px">Senha alterada!</h2>
+            <p style="color:#5e4024;margin-bottom:24px;font-size:0.9rem">
+              Sua senha foi redefinida com sucesso.
+            </p>
+            <a href="#login" class="btn-primary full">Fazer login</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="./js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const formEl   = document.getElementById('formReset');
+      const invalEl  = document.getElementById('acessoInvalido');
+      const finalEl  = document.getElementById('finalOk');
+      const erroEl   = document.getElementById('erroMsg');
+      const btnEl    = document.getElementById('btnSalvar');
+
+      if (btnEl) {
+        const emailValidado = localStorage.getItem('cm_reset_email_validado');
+        if (!emailValidado) {
+          formEl.style.display  = 'none';
+          invalEl.style.display = 'block';
+        }
+
+        btnEl.addEventListener('click', function () {
+          erroEl.style.display = 'none';
+
+          const nova      = document.getElementById('novaSenha').value;
+          const confirmar = document.getElementById('confirmarSenha').value;
+
+          if (!nova)              { mostrarErro('Informe a nova senha.'); return; }
+          if (nova.length < 4)    { mostrarErro('A senha deve ter ao menos 4 caracteres.'); return; }
+          if (nova !== confirmar) { mostrarErro('As senhas não coincidem.'); return; }
+
+          const usuarios = JSON.parse(localStorage.getItem('cm_usuarios') || '[]');
+          const idx = usuarios.findIndex(u => u.email === emailValidado);
+
+          if (idx !== -1) {
+            usuarios[idx].senha = nova;
+            localStorage.setItem('cm_usuarios', JSON.stringify(usuarios));
+          }
+
+          localStorage.removeItem('cm_reset_email_validado');
+
+          formEl.style.display  = 'none';
+          finalEl.style.display = 'block';
+        });
+      }
+
+      function mostrarErro(msg) {
+        erroEl.textContent   = msg;
+        erroEl.style.display = 'block';
+      }
+    });
+  </script>
+  <script>
+    const EMAILJS_PUBLIC_KEY  = 'obY-2f-5d3CrM3owf';
+    const EMAILJS_SERVICE_ID  = 'service_p584o69';
+    const EMAILJS_TEMPLATE_ID = 'template_zdjan1y';
+
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+
+    let codigoGerado  = '';
+    let emailAtual    = '';
+    let nomeAtual     = '';
+    let timerInterval = null;
+
+    function gerarCodigo6() {
+      return String(Math.floor(100000 + Math.random() * 900000));
+    }
+
+    function mostrarErroStep(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent   = msg;
+      el.style.display = 'block';
+    }
+
+    function ocultarErroStep(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    function salvarCodigoTemp(codigo, email) {
+      const expira = Date.now() + 15 * 60 * 1000;
+      localStorage.setItem('cm_reset_codigo', JSON.stringify({ codigo, email, expira }));
+    }
+
+    function codigoTempValido(email) {
+      const raw = localStorage.getItem('cm_reset_codigo');
+      if (!raw) return false;
+      const dados = JSON.parse(raw);
+      return dados.email === email && Date.now() < dados.expira;
+    }
+
+    function getCodigoSalvo() {
+      const raw = localStorage.getItem('cm_reset_codigo');
+      return raw ? JSON.parse(raw).codigo : null;
+    }
+
+    function limparCodigoTemp() {
+      localStorage.removeItem('cm_reset_codigo');
+    }
+
+    function iniciarContagem() {
+      const btnReenviar = document.getElementById('btnReenviar');
+      const timerEl     = document.getElementById('timerReenvio');
+      let segundos = 60;
+
+      btnReenviar.disabled  = true;
+      timerEl.style.display = 'inline';
+
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timerEl.textContent = '(' + segundos + 's)';
+        segundos--;
+        if (segundos < 0) {
+          clearInterval(timerInterval);
+          btnReenviar.disabled  = false;
+          timerEl.style.display = 'none';
+        }
+      }, 1000);
+    }
+
+    async function enviarCodigo(email, nome, codigo) {
+      return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        email:    email,
+        passcode: codigo,
+        time:     new Date(Date.now() + 15 * 60 * 1000).toLocaleTimeString('pt-BR'),
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const btnEnviar = document.getElementById('btnEnviar');
+      if (!btnEnviar) return;
+
+      btnEnviar.addEventListener('click', async function () {
+        ocultarErroStep('erroStep1');
+
+        const email = document.getElementById('emailInput').value.trim().toLowerCase();
+        if (!email) { mostrarErroStep('erroStep1', 'Informe seu e-mail.'); return; }
+
+        const usuarios = JSON.parse(localStorage.getItem('cm_usuarios') || '[]');
+        let usuario = usuarios.find(u => u.email === email);
+        let nome    = usuario ? usuario.nome : null;
+
+        const isAdm = email === 'classmarket@proton.me';
+        if (!usuario && !isAdm) {
+          mostrarErroStep('erroStep1', 'E-mail não encontrado. Verifique e tente novamente.');
+          return;
+        }
+        if (isAdm) nome = 'Administrador';
+
+        const codigo = gerarCodigo6();
+        salvarCodigoTemp(codigo, email);
+        emailAtual = email;
+        nomeAtual  = nome;
+
+        const btn = document.getElementById('btnEnviar');
+        btn.disabled    = true;
+        btn.innerHTML   = '<span class="spinner"></span>Enviando...';
+
+        try {
+          await enviarCodigo(email, nome, codigo);
+
+          document.getElementById('step1').style.display = 'none';
+          document.getElementById('step2').style.display = 'block';
+          document.getElementById('emailMostrado').textContent = email;
+          document.querySelectorAll('.dig')[0].focus();
+          iniciarContagem();
+
+        } catch (err) {
+          mostrarErroStep('erroStep1', 'Falha ao enviar o e-mail. Verifique as configurações do EmailJS.');
+          console.error('EmailJS erro:', err);
+        } finally {
+          btn.disabled  = false;
+          btn.innerHTML = 'Enviar código';
+        }
+      });
+
+      document.querySelectorAll('.dig').forEach((input, i, all) => {
+        input.addEventListener('input', function () {
+          this.value = this.value.replace(/\D/g, '').slice(-1);
+          if (this.value && i < all.length - 1) all[i + 1].focus();
+        });
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Backspace' && !this.value && i > 0) all[i - 1].focus();
+        });
+        input.addEventListener('paste', function (e) {
+          e.preventDefault();
+          const texto = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+          [...texto].slice(0, 6).forEach((c, j) => { if (all[i + j]) all[i + j].value = c; });
+          const ultimo = Math.min(i + texto.length, all.length - 1);
+          all[ultimo].focus();
+        });
+      });
+
+      document.getElementById('btnVerificar').addEventListener('click', function () {
+        ocultarErroStep('erroStep2');
+        document.getElementById('sucessoStep2').style.display = 'none';
+
+        const digitado = [...document.querySelectorAll('.dig')].map(i => i.value).join('');
+
+        if (digitado.length < 6) {
+          mostrarErroStep('erroStep2', 'Digite todos os 6 dígitos do código.');
+          return;
+        }
+
+        if (!codigoTempValido(emailAtual)) {
+          mostrarErroStep('erroStep2', 'O código expirou. Solicite um novo.');
+          return;
+        }
+
+        if (digitado !== getCodigoSalvo()) {
+          mostrarErroStep('erroStep2', 'Código incorreto. Tente novamente.');
+          document.querySelectorAll('.dig').forEach(i => i.value = '');
+          document.querySelectorAll('.dig')[0].focus();
+          return;
+        }
+
+        localStorage.setItem('cm_reset_email_validado', emailAtual);
+        limparCodigoTemp();
+        window.location.hash = '#redefinir-senha';
+      });
+
+      document.getElementById('btnReenviar').addEventListener('click', async function () {
+        ocultarErroStep('erroStep2');
+
+        const codigo = gerarCodigo6();
+        salvarCodigoTemp(codigo, emailAtual);
+
+        this.disabled = true;
+        try {
+          await enviarCodigo(emailAtual, nomeAtual, codigo);
+          const ok = document.getElementById('sucessoStep2');
+          ok.textContent   = '✅ Novo código enviado!';
+          ok.style.display = 'block';
+          setTimeout(() => ok.style.display = 'none', 4000);
+          document.querySelectorAll('.dig').forEach(i => i.value = '');
+          document.querySelectorAll('.dig')[0].focus();
+          iniciarContagem();
+        } catch (err) {
+          mostrarErroStep('erroStep2', 'Falha ao reenviar. Tente novamente.');
+          this.disabled = false;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
