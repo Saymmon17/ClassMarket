@@ -1,5 +1,6 @@
 package com.classmarket.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import com.classmarket.security.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,29 +37,26 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .cors(c -> c.configurationSource(corsSource()))
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Recursos estáticos e SPA
-                .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/uploads/**").permitAll()
-                // Auth pública
-                .requestMatchers("/api/auth/**").permitAll()
-                // Leitura pública de produtos e categorias
-                .requestMatchers(HttpMethod.GET, "/api/produtos/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
-                // Avaliações: leitura pública, escrita requer login
-                .requestMatchers(HttpMethod.GET, "/api/avaliacoes/**").permitAll()
-                // ADM
-                .requestMatchers("/api/adm/**").hasRole("ADM")
-                // Demais rotas requerem autenticação
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
+    http
+        .cors(c -> c.configurationSource(corsSource()))
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .exceptionHandling(ex -> ex
+            .authenticationEntryPoint((req, res, e) ->
+                res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
+        )
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/uploads/**").permitAll()
+            .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/produtos/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/avaliacoes/**").permitAll()
+            .requestMatchers("/api/adm/**").hasRole("ADM")
+            .anyRequest().authenticated()
+        )
+        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+    return http.build();
+}
 
     @Bean
     public CorsConfigurationSource corsSource() {
