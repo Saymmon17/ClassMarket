@@ -23,12 +23,13 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest req,
-                                    HttpServletResponse res,
-                                    FilterChain chain) throws ServletException, IOException {
+protected void doFilterInternal(HttpServletRequest req,
+                                HttpServletResponse res,
+                                FilterChain chain) throws ServletException, IOException {
 
-        String header = req.getHeader("Authorization");
+    String header = req.getHeader("Authorization");
 
+    try {
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
             if (jwtUtil.validar(token)) {
@@ -44,7 +45,10 @@ public class JwtFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
         }
-
+    } catch (Exception e) {
+        // Token inválido ou malformado — apenas ignora e continua sem autenticar
+        SecurityContextHolder.clearContext();
+    }
         chain.doFilter(req, res);
     }
 }
