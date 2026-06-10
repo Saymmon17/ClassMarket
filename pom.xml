@@ -57,6 +57,13 @@
       <scope>runtime</scope>
     </dependency>
 
+    <!-- H2 fallback for deployments without MySQL -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
     <!-- JWT (JJWT) -->
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
