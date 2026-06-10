@@ -265,12 +265,7 @@ function renderNavbar() {
   logoutModal.addEventListener('click', e => { if (e.target === logoutModal) hideModal(); });
 }
 
-renderNavbar();
-updateNavbarActive();
-activateRoute();
-window.addEventListener('hashchange', () => {
-  renderNavbar(); updateNavbarActive(); activateRoute();
-});
+
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  PAGE LOADERS — chamados por activateRoute()
@@ -930,6 +925,14 @@ pageLoaders['redefinir-senha'] = function() {
     finally { newBtn.disabled = false; }
   });
 };
+
+// ── Inicialização ─────────────────────────────────────────────────────────
+renderNavbar();
+updateNavbarActive();
+activateRoute();
+window.addEventListener('hashchange', () => {
+  renderNavbar(); updateNavbarActive(); activateRoute();
+});
 
 // ── Util: File → base64 ────────────────────────────────────────────────────
 function toBase64(file) {
