@@ -47,4 +47,12 @@ public class AuthController {
         authService.redefinirSenha(req.getToken(), req.getNovaSenha());
         return ResponseEntity.ok(new MensagemResponse("Senha redefinida com sucesso"));
     }
+
+    // ── Redefinir senha por e-mail (fluxo via código EmailJS) ────────────
+    @PostMapping("/redefinir-senha-email")
+    public ResponseEntity<MensagemResponse> redefinirSenhaPorEmail(
+            @Valid @RequestBody RedefinirSenhaEmailRequest req) {
+        authService.redefinirSenhaPorEmail(req.getEmail(), req.getNovaSenha());
+        return ResponseEntity.ok(new MensagemResponse("Senha redefinida com sucesso"));
+    }
 }

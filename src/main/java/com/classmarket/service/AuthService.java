@@ -99,6 +99,19 @@ public class AuthService {
         usuarioRepo.save(u);
     }
 
+    // ── Redefinir senha por e-mail (fluxo via código EmailJS) ────────────
+    @Transactional
+    public void redefinirSenhaPorEmail(String email, String novaSenha) {
+        Usuario u = usuarioRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("E-mail não encontrado"));
+
+        u.setSenha(encoder.encode(novaSenha));
+        // Limpa token de reset caso exista, por segurança
+        u.setResetToken(null);
+        u.setResetExpira(null);
+        usuarioRepo.save(u);
+    }
+
     // ── Helper ─────────────────────────────────────────────────────────────
     private UsuarioResumo toResumo(Usuario u, boolean adm) {
         UsuarioResumo r = new UsuarioResumo();

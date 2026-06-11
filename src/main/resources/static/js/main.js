@@ -564,16 +564,39 @@ pageLoaders['cadastro-produto'] = async function() {
     const descricao   = document.getElementById('descricao').value.trim();
     const bloco       = document.getElementById('bloco').value.trim();
     const sala        = document.getElementById('sala').value.trim();
-    const fotoUrl     = document.getElementById('foto')?.files[0]
-      ? await toBase64(document.getElementById('foto').files[0])
-      : '';
+    const arquivoFoto = document.getElementById('foto')?.files[0] || null;
 
     if (!nome || !preco || !categoriaId || !bloco || !sala) {
       alert('Preencha os campos obrigatórios (*).'); return;
     }
 
-    newBtn.disabled = true;
+    newBtn.disabled    = true;
+    newBtn.textContent = 'Enviando...';
+
     try {
+      // 1. Se houver foto, fazer upload separado (evita JSON gigante)
+      let fotoUrl = '';
+      if (arquivoFoto) {
+        newBtn.textContent = 'Enviando foto...';
+        const formData = new FormData();
+        formData.append('foto', arquivoFoto);
+
+        const token = Auth.getToken();
+        const uploadRes = await fetch(`${API}/produtos/upload-foto`, {
+          method: 'POST',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+          body: formData,
+        });
+        if (!uploadRes.ok) {
+          const err = await uploadRes.json().catch(() => ({}));
+          throw new Error(err.erro || 'Erro ao enviar foto. Tente novamente.');
+        }
+        const uploadData = await uploadRes.json();
+        fotoUrl = uploadData.fotoUrl || '';
+        newBtn.textContent = 'Cadastrando produto...';
+      }
+
+      // 2. Cadastrar o produto com a fotoUrl retornada pelo servidor
       await apiFetch('/produtos', {
         method: 'POST',
         body: JSON.stringify({
@@ -581,12 +604,14 @@ pageLoaders['cadastro-produto'] = async function() {
           categoriaId: parseInt(categoriaId), descricao, bloco, sala, fotoUrl,
         }),
       });
+
       alert('Produto cadastrado! Aguarde aprovação do ADM.');
       window.location.hash = '#home';
     } catch (e) {
       alert(e.message);
     } finally {
-      newBtn.disabled = false;
+      newBtn.disabled    = false;
+      newBtn.textContent = 'Cadastrar Produto';
     }
   });
 };

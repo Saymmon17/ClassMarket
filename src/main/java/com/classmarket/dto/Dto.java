@@ -133,6 +133,15 @@ public class Dto {
         private String novaSenha;
     }
 
+    // Usado pelo fluxo de redefinição via código (EmailJS) — sem token, com e-mail direto
+    @Data
+    public static class RedefinirSenhaEmailRequest {
+        @NotBlank @Email
+        private String email;
+        @NotBlank @Size(min = 4)
+        private String novaSenha;
+    }
+
     // ── Status ADM ────────────────────────────────────────────────────────
 
     @Data

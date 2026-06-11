@@ -7,8 +7,12 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/produtos")
@@ -50,6 +54,33 @@ public class ProdutoController {
             @AuthenticationPrincipal String email) {
         return ResponseEntity.status(201)
                 .body(produtoService.cadastrar(req, email));
+    }
+
+    // ── POST /api/produtos/upload-foto ────────────────────────────────────
+    // Recebe a imagem como multipart/form-data e devolve a string Base64
+    // pronta para ser usada como fotoUrl no cadastro do produto.
+    // Isso evita trafegar Base64 gigante direto no JSON do POST /api/produtos.
+    @PostMapping("/upload-foto")
+    public ResponseEntity<Map<String, String>> uploadFoto(
+            @RequestParam("foto") MultipartFile foto) throws IOException {
+
+        if (foto.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("erro", "Arquivo vazio."));
+        }
+
+        long maxBytes = 10 * 1024 * 1024; // 10 MB
+        if (foto.getSize() > maxBytes) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("erro", "Imagem muito grande. Máximo 10 MB."));
+        }
+
+        String mimeType = foto.getContentType() != null
+                ? foto.getContentType() : "image/jpeg";
+        String base64 = Base64.getEncoder().encodeToString(foto.getBytes());
+        String dataUrl = "data:" + mimeType + ";base64," + base64;
+
+        return ResponseEntity.ok(Map.of("fotoUrl", dataUrl));
     }
 
     // ── PUT /api/produtos/{id} ────────────────────────────────────────────

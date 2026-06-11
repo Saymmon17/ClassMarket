@@ -39,7 +39,7 @@ public class Produto {
     @Column(nullable = false, length = 10)
     private String sala;
 
-    @Column(name = "foto_url", length = 500)
+    @Column(name = "foto_url", columnDefinition = "LONGTEXT")
     private String fotoUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
