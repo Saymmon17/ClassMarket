@@ -40,6 +40,6 @@ public class Usuario {
     @Column(nullable = false)
     private Boolean ativo = true;
 
-    @Column(name = "criado_em", nullable = false, updatable = false)
+    @Column(name = "criado_em", updatable = false)
     private LocalDateTime criadoEm = LocalDateTime.now();
 }
