@@ -133,6 +133,14 @@ public class Dto {
         private String novaSenha;
     }
 
+    @Data
+    public static class RedefinirSenhaEmailRequest {
+        @NotBlank @Email
+        private String email;
+        @NotBlank @Size(min = 4)
+        private String novaSenha;
+    }
+
     // ── Status ADM ────────────────────────────────────────────────────────
 
     @Data
