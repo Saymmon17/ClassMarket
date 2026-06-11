@@ -48,6 +48,18 @@ public class AuthController {
         return ResponseEntity.ok(new MensagemResponse("Senha redefinida com sucesso"));
     }
 
+    // ── Verificar e-mail (para o fluxo de esqueci senha via código) ────────
+    @PostMapping("/verificar-email")
+    public ResponseEntity<?> verificarEmail(
+            @Valid @RequestBody EsqueciSenhaRequest req) {
+        try {
+            return ResponseEntity.ok(authService.verificarEmail(req.getEmail()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404)
+                    .body(new MensagemResponse(e.getMessage()));
+        }
+    }
+
     // ── Redefinir senha por e-mail (fluxo via código EmailJS) ────────────
     @PostMapping("/redefinir-senha-email")
     public ResponseEntity<MensagemResponse> redefinirSenhaPorEmail(

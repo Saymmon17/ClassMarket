@@ -99,6 +99,13 @@ public class AuthService {
         usuarioRepo.save(u);
     }
 
+    // ── Verificar se e-mail existe (para o fluxo de esqueci senha) ────────
+    public java.util.Map<String, String> verificarEmail(String email) {
+        Usuario u = usuarioRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("E-mail não encontrado"));
+        return java.util.Map.of("nome", u.getNome());
+    }
+
     // ── Redefinir senha por e-mail (fluxo via código EmailJS) ────────────
     @Transactional
     public void redefinirSenhaPorEmail(String email, String novaSenha) {

@@ -443,7 +443,7 @@
           invalEl.style.display = 'block';
         }
 
-        btnEl.addEventListener('click', function () {
+        btnEl.addEventListener('click', async function () {
           erroEl.style.display = 'none';
 
           const nova      = document.getElementById('novaSenha').value;
@@ -453,12 +453,26 @@
           if (nova.length < 4)    { mostrarErro('A senha deve ter ao menos 4 caracteres.'); return; }
           if (nova !== confirmar) { mostrarErro('As senhas não coincidem.'); return; }
 
-          const usuarios = JSON.parse(localStorage.getItem('cm_usuarios') || '[]');
-          const idx = usuarios.findIndex(u => u.email === emailValidado);
+          btnEl.disabled    = true;
+          btnEl.textContent = 'Salvando...';
 
-          if (idx !== -1) {
-            usuarios[idx].senha = nova;
-            localStorage.setItem('cm_usuarios', JSON.stringify(usuarios));
+          try {
+            // Atualiza a senha no backend pelo e-mail validado
+            await fetch('/api/auth/redefinir-senha-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: emailValidado, novaSenha: nova })
+            }).then(async r => {
+              if (!r.ok) {
+                const err = await r.json().catch(() => ({}));
+                throw new Error(err.mensagem || 'Erro ao salvar.');
+              }
+            });
+          } catch (err) {
+            mostrarErro(err.message || 'Erro ao salvar. Tente novamente.');
+            btnEl.disabled    = false;
+            btnEl.textContent = 'Salvar nova senha';
+            return;
           }
 
           localStorage.removeItem('cm_reset_email_validado');
@@ -524,14 +538,16 @@
     function iniciarContagem() {
       const btnReenviar = document.getElementById('btnReenviar');
       const timerEl     = document.getElementById('timerReenvio');
-      let segundos = 60;
+      let segundos = 300; // 5 minutos
 
       btnReenviar.disabled  = true;
       timerEl.style.display = 'inline';
 
       clearInterval(timerInterval);
       timerInterval = setInterval(() => {
-        timerEl.textContent = '(' + segundos + 's)';
+        const min = String(Math.floor(segundos / 60)).padStart(2, '0');
+        const seg = String(segundos % 60).padStart(2, '0');
+        timerEl.textContent = '(' + min + ':' + seg + ')';
         segundos--;
         if (segundos < 0) {
           clearInterval(timerInterval);
@@ -559,38 +575,43 @@
         const email = document.getElementById('emailInput').value.trim().toLowerCase();
         if (!email) { mostrarErroStep('erroStep1', 'Informe seu e-mail.'); return; }
 
-        const usuarios = JSON.parse(localStorage.getItem('cm_usuarios') || '[]');
-        let usuario = usuarios.find(u => u.email === email);
-        let nome    = usuario ? usuario.nome : null;
-
-        const isAdm = email === 'classmarket@proton.me';
-        if (!usuario && !isAdm) {
-          mostrarErroStep('erroStep1', 'E-mail não encontrado. Verifique e tente novamente.');
-          return;
-        }
-        if (isAdm) nome = 'Administrador';
-
-        const codigo = gerarCodigo6();
-        salvarCodigoTemp(codigo, email);
-        emailAtual = email;
-        localStorage.setItem('cm_reset_email_atual', email);
-        nomeAtual  = nome;
-
         const btn = document.getElementById('btnEnviar');
-        btn.disabled    = true;
-        btn.innerHTML   = '<span class="spinner"></span>Enviando...';
+        btn.disabled  = true;
+        btn.innerHTML = '<span class="spinner"></span>Enviando...';
 
         try {
+          // Verifica se o e-mail existe no banco via API
+          const res = await fetch('/api/auth/verificar-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          });
+
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            mostrarErroStep('erroStep1', err.mensagem || 'E-mail não encontrado. Verifique e tente novamente.');
+            return;
+          }
+
+          const dados = await res.json();
+          const nome  = dados.nome || 'Usuário';
+
+          const codigo = gerarCodigo6();
+          salvarCodigoTemp(codigo, email);
+          emailAtual = email;
+          localStorage.setItem('cm_reset_email_atual', email);
+          nomeAtual  = nome;
+
           await enviarCodigo(email, nome, codigo);
 
           document.getElementById('step1').style.display = 'none';
           document.getElementById('step2').style.display = 'block';
           document.getElementById('emailMostrado').textContent = email;
           document.querySelectorAll('.dig')[0].focus();
-          iniciarContagem();
+          iniciarContagem(); // cooldown de 60s desde o primeiro envio
 
         } catch (err) {
-          mostrarErroStep('erroStep1', 'Falha ao enviar o e-mail. Verifique as configurações do EmailJS.');
+          mostrarErroStep('erroStep1', 'Falha ao enviar o e-mail. Tente novamente.');
           console.error('EmailJS erro:', err);
         } finally {
           btn.disabled  = false;
