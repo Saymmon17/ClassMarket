@@ -573,6 +573,7 @@
         const codigo = gerarCodigo6();
         salvarCodigoTemp(codigo, email);
         emailAtual = email;
+        localStorage.setItem('cm_reset_email_atual', email);
         nomeAtual  = nome;
 
         const btn = document.getElementById('btnEnviar');
@@ -615,6 +616,7 @@
       });
 
       document.getElementById('btnVerificar').addEventListener('click', function () {
+        if (!emailAtual) emailAtual = localStorage.getItem('cm_reset_email_atual') || '';
         ocultarErroStep('erroStep2');
         document.getElementById('sucessoStep2').style.display = 'none';
 
@@ -639,10 +641,12 @@
 
         localStorage.setItem('cm_reset_email_validado', emailAtual);
         limparCodigoTemp();
+        localStorage.removeItem('cm_reset_email_atual');
         window.location.hash = '#redefinir-senha';
       });
 
       document.getElementById('btnReenviar').addEventListener('click', async function () {
+        if (!emailAtual) emailAtual = localStorage.getItem('cm_reset_email_atual') || '';
         ocultarErroStep('erroStep2');
 
         const codigo = gerarCodigo6();
