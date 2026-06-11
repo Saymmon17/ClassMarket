@@ -32,6 +32,7 @@ public class ProdutoService {
     }
 
     // ── Listagem pública (aprovados) ───────────────────────────────────────
+    @Transactional(readOnly = true)
     public List<ProdutoResponse> listarAprovados(String categoria, String busca) {
         List<Produto> lista;
         if (busca != null && !busca.isBlank()) {
@@ -45,6 +46,7 @@ public class ProdutoService {
     }
 
     // ── Produto por ID (público) ───────────────────────────────────────────
+    @Transactional(readOnly = true)
     public ProdutoResponse buscarPorId(Integer id) {
         Produto p = produtoRepo.findById(id)
                 .filter(prod -> prod.getAtivo() && "aprovado".equals(prod.getStatus()))
@@ -53,6 +55,7 @@ public class ProdutoService {
     }
 
     // ── Meus produtos ──────────────────────────────────────────────────────
+    @Transactional(readOnly = true)
     public List<ProdutoResponse> meusProdutos(String email) {
         Usuario u = usuarioRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
@@ -127,11 +130,13 @@ public class ProdutoService {
     }
 
     // ── ADM: listar todos / pendentes ──────────────────────────────────────
+    @Transactional(readOnly = true)
     public List<ProdutoResponse> listarTodosAdm() {
         return produtoRepo.findAllByAtivoTrueOrderByCriadoEmDesc()
                 .stream().map(this::toResponse).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<ProdutoResponse> listarPendentes() {
         return produtoRepo.findByStatusAndAtivoTrueOrderByCriadoEmDesc("pendente")
                 .stream().map(this::toResponse).toList();
