@@ -27,12 +27,11 @@ public class DataInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         usuarioRepo.findByEmail(ADM_EMAIL).ifPresent(adm -> {
-            if ("TROCAR_VIA_JAVA".equals(adm.getSenha())) {
-                adm.setSenha(encoder.encode(admSenha));
-                adm.setAtivo(true);
-                usuarioRepo.save(adm);
-                System.out.println("[DataInitializer] Senha do ADM definida com sucesso.");
-            }
+            // Força atualização da senha e garante que o ADM está ativo
+            adm.setSenha(encoder.encode(admSenha));
+            adm.setAtivo(true);
+            usuarioRepo.save(adm);
+            System.out.println("[DataInitializer] Senha e status do ADM atualizados.");
         });
     }
 }
