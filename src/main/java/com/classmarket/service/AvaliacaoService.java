@@ -58,12 +58,14 @@ public class AvaliacaoService {
     }
 
     // ── Listar todas ───────────────────────────────────────────────────────
+    @Transactional(readOnly = true)
     public List<AvaliacaoResponse> listarTodas() {
         return avaliacaoRepo.findAllByOrderByCriadoEmDesc()
                 .stream().map(this::toResponse).toList();
     }
 
     // ── Listar por produto ─────────────────────────────────────────────────
+    @Transactional(readOnly = true)
     public List<AvaliacaoResponse> listarPorProduto(Integer produtoId) {
         return avaliacaoRepo.findByProdutoIdOrderByCriadoEmDesc(produtoId)
                 .stream().map(this::toResponse).toList();

@@ -17,6 +17,7 @@ public class UsuarioService {
         this.usuarioRepo = usuarioRepo;
     }
 
+    @Transactional(readOnly = true)
     public List<UsuarioResumo> listar() {
         return usuarioRepo.findAllByAtivoTrueOrderByNome()
                 .stream().map(this::toResumo).toList();
