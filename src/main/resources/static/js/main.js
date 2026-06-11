@@ -37,6 +37,74 @@ async function apiFetch(path, options = {}) {
   return body;
 }
 
+// ── Notificações ─────────────────────────────────────────────────────────
+async function carregarBadgeNotif() {
+  const logado = Auth.getLogado();
+  if (!logado) return;
+  try {
+    const data = await apiFetch('/notificacoes/nao-lidas');
+    const badge = document.getElementById('notifBadge');
+    if (badge) {
+      badge.textContent = data.total;
+      badge.style.display = data.total > 0 ? 'inline-flex' : 'none';
+    }
+  } catch (_) {}
+}
+
+async function abrirPainelNotif() {
+  const painel = document.getElementById('notifPanel');
+  const lista  = document.getElementById('notifLista');
+  if (!painel || !lista) return;
+
+  const aberto = painel.style.display !== 'none';
+  painel.style.display = aberto ? 'none' : 'block';
+  if (aberto) return;
+
+  lista.innerHTML = '<p style="color:#5e4024;padding:12px">Carregando...</p>';
+
+  try {
+    const notifs = await apiFetch('/notificacoes');
+    if (!notifs.length) {
+      lista.innerHTML = '<p style="color:#5e4024;padding:12px">Nenhuma notificação.</p>';
+      return;
+    }
+    lista.innerHTML = notifs.map(n => `
+      <div class="notif-item ${n.lida ? 'lida' : 'nao-lida'}">
+        <div class="notif-titulo">${n.titulo}</div>
+        <div class="notif-msg">${n.mensagem}</div>
+        <div class="notif-data">${n.criadoEm}</div>
+      </div>`).join('');
+  } catch (_) {
+    lista.innerHTML = '<p style="color:#5e4024;padding:12px">Erro ao carregar.</p>';
+  }
+}
+
+function initNotifListeners() {
+  const btn = document.getElementById('btnNotif');
+  if (btn) {
+    btn.addEventListener('click', e => { e.stopPropagation(); abrirPainelNotif(); });
+  }
+  const btnLer = document.getElementById('btnLerTodas');
+  if (btnLer) {
+    btnLer.addEventListener('click', async () => {
+      await apiFetch('/notificacoes/ler-todas', { method: 'PATCH' });
+      const badge = document.getElementById('notifBadge');
+      if (badge) badge.style.display = 'none';
+      document.querySelectorAll('.notif-item.nao-lida').forEach(el => {
+        el.classList.replace('nao-lida', 'lida');
+      });
+    });
+  }
+  // Fechar painel ao clicar fora
+  document.addEventListener('click', e => {
+    const painel = document.getElementById('notifPanel');
+    const btn    = document.getElementById('btnNotif');
+    if (painel && !painel.contains(e.target) && e.target !== btn) {
+      painel.style.display = 'none';
+    }
+  });
+}
+
 // ── Routing ───────────────────────────────────────────────────────────────
 function getRoute() {
   const raw = window.location.hash.slice(1);
@@ -160,6 +228,9 @@ function renderNavbar() {
     ? `<span style="color:#ede0d4;font-size:0.85rem;white-space:nowrap">Olá, ${logado.nome.split(' ')[0]}</span>
        <a href="#cadastro-produto" class="btn-primary" style="padding:0.45rem 1rem;font-size:0.85rem">+ Vender</a>
        ${logado.adm ? `<a href="#adm" class="btn-outline" style="padding:0.4rem 0.9rem;font-size:0.85rem">ADM</a>` : ''}
+       <button class="btn-ghost notif-btn" id="btnNotif" title="Notificações">
+         🔔<span class="notif-badge" id="notifBadge" style="display:none">0</span>
+       </button>
        <button class="btn-ghost" id="btnLogout">Sair</button>`
     : `<a href="#login" class="btn-ghost">Entrar</a>
        <a href="#cadastro" class="btn-primary" style="padding:0.45rem 1.1rem;font-size:0.85rem">Cadastrar</a>`;
@@ -184,6 +255,13 @@ function renderNavbar() {
        <a href="#login">Entrar</a><a href="#cadastro">Cadastrar</a>`;
 
   nav.innerHTML = `
+    <div id="notifPanel" class="notif-panel" style="display:none">
+      <div class="notif-panel-header">
+        <span>🔔 Notificações</span>
+        <button id="btnLerTodas" class="btn-ghost" style="font-size:0.78rem">Marcar todas como lidas</button>
+      </div>
+      <div id="notifLista" class="notif-lista"><p style="color:#5e4024;padding:12px">Carregando...</p></div>
+    </div>
     <a class="navbar-logo" href="#home">Class Market</a>
     <ul class="navbar-links">
       <li>${link('#home', '🏠 Home', 'home')}</li>
@@ -564,39 +642,16 @@ pageLoaders['cadastro-produto'] = async function() {
     const descricao   = document.getElementById('descricao').value.trim();
     const bloco       = document.getElementById('bloco').value.trim();
     const sala        = document.getElementById('sala').value.trim();
-    const arquivoFoto = document.getElementById('foto')?.files[0] || null;
+    const fotoUrl     = document.getElementById('foto')?.files[0]
+      ? await toBase64(document.getElementById('foto').files[0])
+      : '';
 
     if (!nome || !preco || !categoriaId || !bloco || !sala) {
       alert('Preencha os campos obrigatórios (*).'); return;
     }
 
-    newBtn.disabled    = true;
-    newBtn.textContent = 'Enviando...';
-
+    newBtn.disabled = true;
     try {
-      // 1. Se houver foto, fazer upload separado (evita JSON gigante)
-      let fotoUrl = '';
-      if (arquivoFoto) {
-        newBtn.textContent = 'Enviando foto...';
-        const formData = new FormData();
-        formData.append('foto', arquivoFoto);
-
-        const token = Auth.getToken();
-        const uploadRes = await fetch(`${API}/produtos/upload-foto`, {
-          method: 'POST',
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-          body: formData,
-        });
-        if (!uploadRes.ok) {
-          const err = await uploadRes.json().catch(() => ({}));
-          throw new Error(err.erro || 'Erro ao enviar foto. Tente novamente.');
-        }
-        const uploadData = await uploadRes.json();
-        fotoUrl = uploadData.fotoUrl || '';
-        newBtn.textContent = 'Cadastrando produto...';
-      }
-
-      // 2. Cadastrar o produto com a fotoUrl retornada pelo servidor
       await apiFetch('/produtos', {
         method: 'POST',
         body: JSON.stringify({
@@ -604,14 +659,12 @@ pageLoaders['cadastro-produto'] = async function() {
           categoriaId: parseInt(categoriaId), descricao, bloco, sala, fotoUrl,
         }),
       });
-
       alert('Produto cadastrado! Aguarde aprovação do ADM.');
       window.location.hash = '#home';
     } catch (e) {
       alert(e.message);
     } finally {
-      newBtn.disabled    = false;
-      newBtn.textContent = 'Cadastrar Produto';
+      newBtn.disabled = false;
     }
   });
 };
@@ -871,11 +924,13 @@ pageLoaders.adm = async function() {
 
     <div class="card" style="margin-top:24px">
       <h2>⭐ Avaliações recentes</h2>
-      ${avaliacoes.slice(0,10).map(a => `
+      ${avaliacoes.slice(0,20).map(a => `
         <div class="aval-item">
           <div class="aval-item-header">
             <span class="aval-item-nome">${a.usuarioNome || 'Anônimo'}</span>
             <span class="aval-item-estrelas">${'★'.repeat(a.nota)}${'☆'.repeat(5-a.nota)}</span>
+            <button class="btn-danger" style="margin-left:auto;font-size:0.75rem;padding:0.25rem 0.6rem"
+              data-action="deletar-avaliacao" data-id="${a.id}">🗑 Remover</button>
           </div>
           <div class="aval-item-coment">${a.comentario || '<em>Sem comentário</em>'}</div>
           <div class="aval-item-meta">${a.criadoEm} · ${a.tipo === 'site' ? '🌐 Site' : '📦 ' + a.produtoNome}</div>
@@ -909,6 +964,13 @@ pageLoaders.adm = async function() {
       } else if (action === 'excluir-usuario') {
         if (!confirm('Desativar este usuário?')) { btn.disabled = false; btn.textContent = textoOriginal; return; }
         await apiFetch(`/adm/usuarios/${id}`, { method: 'DELETE' });
+      } else if (action === 'deletar-avaliacao') {
+        const motivo = prompt('Informe o motivo da remoção (será enviado ao usuário):');
+        if (!motivo || !motivo.trim()) { btn.disabled = false; btn.textContent = textoOriginal; return; }
+        await apiFetch(`/adm/avaliacoes/${id}`, {
+          method: 'DELETE',
+          body: JSON.stringify({ motivo: motivo.trim() })
+        });
       }
 
       pageLoaders.adm(); // Re-renderizar
@@ -971,8 +1033,12 @@ pageLoaders['redefinir-senha'] = function() {
 renderNavbar();
 updateNavbarActive();
 activateRoute();
+initNotifListeners();
+carregarBadgeNotif();
 window.addEventListener('hashchange', () => {
   renderNavbar(); updateNavbarActive(); activateRoute();
+  initNotifListeners();
+  carregarBadgeNotif();
 });
 
 // ── Util: File → base64 ────────────────────────────────────────────────────

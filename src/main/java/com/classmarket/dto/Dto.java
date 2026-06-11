@@ -133,21 +133,31 @@ public class Dto {
         private String novaSenha;
     }
 
-    // Usado pelo fluxo de redefinição via código (EmailJS) — sem token, com e-mail direto
-    @Data
-    public static class RedefinirSenhaEmailRequest {
-        @NotBlank @Email
-        private String email;
-        @NotBlank @Size(min = 4)
-        private String novaSenha;
-    }
-
     // ── Status ADM ────────────────────────────────────────────────────────
 
     @Data
     public static class StatusRequest {
         @NotBlank
         private String status; // "aprovado" ou "negado"
+    }
+
+    // ── Notificação ───────────────────────────────────────────────────────
+
+    @Data
+    public static class NotificacaoResponse {
+        private Integer id;
+        private String titulo;
+        private String mensagem;
+        private Boolean lida;
+        private String criadoEm;
+    }
+
+    // ── Deletar avaliação com motivo ──────────────────────────────────────
+
+    @Data
+    public static class DeletarAvaliacaoRequest {
+        @NotBlank
+        private String motivo;
     }
 
     // ── Resposta genérica ─────────────────────────────────────────────────

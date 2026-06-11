@@ -1,6 +1,7 @@
 package com.classmarket.controller;
 
 import com.classmarket.dto.Dto.*;
+import com.classmarket.service.NotificacaoService;
 import com.classmarket.service.ProdutoService;
 import com.classmarket.service.UsuarioService;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +18,14 @@ public class AdmController {
     private final ProdutoService produtoService;
     private final UsuarioService usuarioService;
 
-    public AdmController(ProdutoService produtoService, UsuarioService usuarioService) {
+    private final NotificacaoService notifService;
+
+    public AdmController(ProdutoService produtoService,
+                         UsuarioService usuarioService,
+                         NotificacaoService notifService) {
         this.produtoService = produtoService;
         this.usuarioService = usuarioService;
+        this.notifService   = notifService;
     }
 
     // ── Produtos ──────────────────────────────────────────────────────────
@@ -44,6 +50,16 @@ public class AdmController {
     @DeleteMapping("/produtos/{id}")
     public ResponseEntity<Void> excluirProduto(@PathVariable Integer id) {
         produtoService.excluir(id, null, true);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ── Avaliações ───────────────────────────────────────────────────────
+
+    @DeleteMapping("/avaliacoes/{id}")
+    public ResponseEntity<Void> deletarAvaliacao(
+            @PathVariable Integer id,
+            @RequestBody DeletarAvaliacaoRequest req) {
+        notifService.deletarAvaliacaoComMotivo(id, req.getMotivo());
         return ResponseEntity.noContent().build();
     }
 
